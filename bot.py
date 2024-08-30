@@ -5,6 +5,7 @@ from nextcord import Interaction, Message
 from nextcord.ext import commands, application_checks
 import logging
 from dotenv import load_dotenv
+import aiInterface
 
 load_dotenv()
 
@@ -40,11 +41,20 @@ async def on_message(message: Message):
     if message.author == bot.user:
         return
     logging.info(f"{message.author} sent a message")
-    if message.content == "hello" and message.author.id != bot.user.id:
+    if int(os.getenv("CHANNEL_ID"))!=message.channel.id:
+        logging.info("wrong channel")
+        return
+    await message.channel.trigger_typing()
+    await message.channel.send(aiInterface.getResponse(str(message.author)+": "+message.content))
+
+
+
+
+    """if message.content == "hello" and message.author.id != bot.user.id:
         try:
           await message.channel.send(f"what's down")
         except nextcord.Forbidden:
-          logging.info(f"Bot does not have permissions to send messages {message.guild.name}#{message.channel.name}")
+          logging.info(f"Bot does not have permissions to send messages {message.guild.name}#{message.channel.name}")"""
 
 @bot.slash_command()
 async def hello(interaction: Interaction):
