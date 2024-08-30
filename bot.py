@@ -36,16 +36,19 @@ async def on_ready():
 
 @bot.listen("on_message")
 async def on_message(message: Message):
+    
     if message.author == bot.user:
         return
+    logging.info(f"{message.author} sent a message")
     if message.content == "hello" and message.author.id != bot.user.id:
         try:
-          await message.reply(f"what's down")
+          await message.channel.send(f"what's down")
         except nextcord.Forbidden:
           logging.info(f"Bot does not have permissions to send messages {message.guild.name}#{message.channel.name}")
 
 @bot.slash_command()
 async def hello(interaction: Interaction):
+    logging.info(f'{interaction.user} used /hello')
     await interaction.response.send_message("Hello!")
 
 if not os.getenv("TOKEN"):
