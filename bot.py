@@ -4,6 +4,9 @@ import nextcord
 from nextcord import Interaction
 from nextcord.ext import commands
 import logging
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 if "--debug" in sys.argv:
