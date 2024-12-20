@@ -17,6 +17,10 @@ intents = nextcord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(intents=intents)
 
+talkingChannels=[int(i) for i in (os.getenv("CHANNEL_ID").replace("[","").replace("]","").split(","))]
+print(talkingChannels)
+global ttsVar
+ttsVar=False
 # captures command errors - not listener errors!
 @bot.event
 async def on_application_command_error(interaction: nextcord.Interaction, error: Exception):
@@ -32,20 +36,46 @@ async def on_application_command_error(interaction: nextcord.Interaction, error:
 
 @bot.listen("on_ready")
 async def on_ready():
+    
     logging.info(f"Logged in as {bot.user}")
     await bot.change_presence(activity=nextcord.Game(name="with your life"))
-
+    #channel = bot.get_channel(1279074416147300414)
+    #await channel.send("@everyone I have returned... >:)")
+    
 @bot.listen("on_message")
 async def on_message(message: Message):
-    
+    name = message.author.name if message.author.global_name == None else message.author.global_name
+    messages=[]
     if message.author == bot.user:
         return
-    logging.info(f"{message.author} sent a message")
-    if int(os.getenv("CHANNEL_ID"))!=message.channel.id:
+    logging.info(f"{name} sent a message: {message.content}")
+
+    if message.channel.id not in talkingChannels:
         logging.info("wrong channel")
         return
+    async for historyMessage in message.channel.history(limit=1):
+        role = "assistant" if historyMessage.author == bot.user else "user"
+        if role == "assistant":
+            tmpname=""
+        else:
+            tmpname = historyMessage.author.name if historyMessage.author.global_name == None else historyMessage.author.global_name
+        messages.append({"role": role, "content": tmpname+": "+historyMessage.content})
+    messages=list(reversed(messages))
+    for i in messages:
+        print(i)
+    
+    
+    
     await message.channel.trigger_typing()
-    await message.channel.send(aiInterface.getResponse(str(message.author)+": "+message.content))
+
+    messageGen = aiInterface.getResponseJSON(messages)
+    #messageGen=aiInterface.getResponse(str(name)+": "+message.content)
+    if len(messageGen)>2000:
+        messageGen = messageGen[0,1999]
+    
+    #await message.reply(messageGen,tts=ttsVar)
+    #await message.reply(aiInterface.getResponse(str(name)+": "+message.content),tts=ttsVar)
+    await message.reply(messageGen,tts=ttsVar)
 
 
 
@@ -56,10 +86,24 @@ async def on_message(message: Message):
         except nextcord.Forbidden:
           logging.info(f"Bot does not have permissions to send messages {message.guild.name}#{message.channel.name}")"""
 
-@bot.slash_command()
+@bot.slash_command(name="hello")
 async def hello(interaction: Interaction):
-    logging.info(f'{interaction.user} used /hello')
-    await interaction.response.send_message("Hello!")
+    logging.info(f'{interaction.user.global_name} used /hello')
+
+    await interaction.response.send_message(f"Hello {interaction.user.global_name}")
+
+@bot.slash_command()
+async def ttstoggle(interaction: Interaction):
+    logging.info(f'{interaction.user.global_name} used /ttstoggle')
+    global ttsVar
+    ttsVar = not ttsVar
+    await interaction.response.send_message("tts has been toggled to "+str(ttsVar))
+
+@bot.slash_command()
+async def printtts(interaction: Interaction):
+    logging.info(f'{interaction.user.global_name} used /printtts')
+    
+    await interaction.response.send_message("tts is currently set to "+str(ttsVar))
 
 if not os.getenv("TOKEN"):
     print("Please set the environment variable TOKEN.")

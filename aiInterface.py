@@ -11,3 +11,8 @@ def getResponse(request):
     ])
     print(response['message']['content'])
     return response['message']['content']
+
+def getResponseJSON(request):
+    response = ollama.chat(model=model, messages=request)
+    print(response['message']['content'])
+    return response['message']['content']
