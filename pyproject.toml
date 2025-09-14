@@ -11,6 +11,7 @@ python = "^3.9"
 nextcord = "^2.6.0"
 python-dotenv = "^1.0.1"
 ollama = "^0.3.2"
+setuptools = "^80.9.0"
 
 
 [build-system]

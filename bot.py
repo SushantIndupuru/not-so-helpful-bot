@@ -53,13 +53,13 @@ async def on_message(message: Message):
     if message.channel.id not in talkingChannels:
         logging.info("wrong channel")
         return
-    async for historyMessage in message.channel.history(limit=1):
+    async for historyMessage in message.channel.history(limit=5):
         role = "assistant" if historyMessage.author == bot.user else "user"
         if role == "assistant":
-            tmpname=""
+            messages.append({"role": role, "content": historyMessage.content})
         else:
-            tmpname = historyMessage.author.name if historyMessage.author.global_name == None else historyMessage.author.global_name
-        messages.append({"role": role, "content": tmpname+": "+historyMessage.content})
+            tmpname = historyMessage.author.display_name
+            messages.append({"role": role, "content": tmpname+": "+historyMessage.content})
     messages=list(reversed(messages))
     for i in messages:
         print(i)
@@ -69,6 +69,8 @@ async def on_message(message: Message):
     await message.channel.trigger_typing()
 
     messageGen = aiInterface.getResponseJSON(messages)
+    if messageGen.find("P.H.A.T.P.H.U.C.K.: ")!=-1:
+        messageGen=messageGen.replace("P.H.A.T.P.H.U.C.K.: ", '')
     #messageGen=aiInterface.getResponse(str(name)+": "+message.content)
     if len(messageGen)>2000:
         messageGen = messageGen[0,1999]
